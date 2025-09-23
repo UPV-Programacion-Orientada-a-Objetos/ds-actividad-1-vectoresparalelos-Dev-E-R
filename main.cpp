@@ -8,7 +8,7 @@ using namespace std;
 void searchAthlete(ifstream& archive);
 void searchCountryGoldMedals(ifstream& archive);
 void showGoldMedalsAthlete(ifstream& archive);
-
+void registerAthlete(const string& filename); 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Uso: ./programa <nombre_archivo_sin_extension>" << std::endl;
@@ -32,7 +32,8 @@ int main(int argc, char* argv[]) {
                   << "1. Buscar atleta\n"
                   << "2. Buscar medallas de un pais\n"
                   << "3. Atleta con mas medallas\n"
-                  << "4. Salir\n"
+                  << "4. Registrar atleta \n"
+                  << "5. Salir\n"
                   << "Seleccione una opcion (1-4): ";
         std::cin >> option;
         std::cin.ignore(); // Limpiar el buffer de entrada
@@ -48,13 +49,16 @@ int main(int argc, char* argv[]) {
                 showGoldMedalsAthlete(archive);
                 break;
             case 4:
+                registerAthlete(nameArchive);
+                break; 
+            case 5:
                 std::cout << "Saliendo del programa.\n";
                 break;
             default:
                 std::cout << "Opcion no valida. Intente de nuevo.\n";
                 break;
         }
-    } while (option != 4);
+    } while (option != 5);
     
     archive.close(); // Cerramos el archivo al final
     return 0;
@@ -176,3 +180,31 @@ void showGoldMedalsAthlete(ifstream& archive) {
         std::cout << "Atleta(s) con mas medallas (" << maxMedals << " medallas): " << topAthletes << std::endl;
     }
 }
+void registerAthlete(const string& filename) {
+    string nombre, pais, disciplina, genero, medallas;
+
+    std::cout << "\n--- Registrar Nuevo Atleta ---\n";
+    std::cout << "Ingrese el nombre: ";
+    std::getline(std::cin, nombre);
+    
+    std::cout << "Ingrese el pais: ";
+    std::getline(std::cin, pais);
+
+    std::cout << "Ingrese la disciplina: ";
+    std::getline(std::cin, disciplina);
+
+    std::cout << "Ingrese el genero (Male/Female): ";
+    std::getline(std::cin, genero);
+    
+    std::cout << "Ingrese el numero de medallas: ";
+    std::getline(std::cin, medallas);
+
+    ofstream archive(filename, ios::app);
+
+    archive << endl << nombre << "," << pais << "," << disciplina << "," << genero << "," << medallas;
+
+    archive.close();
+
+    std::cout << "Atleta registrado con exito." << std::endl;
+}
+
