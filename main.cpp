@@ -23,5 +23,35 @@ int main(int s, char* argv[]) {
         return 1;
     }
     cout << "Archivo abierto: " << nameArchive << endl;
+    // menu
+    std::cout << "Menu de opciones:\n";
+    std::cout << "1. Buscar atlteta\n";
+    std::cout << "2. Buscar medallas de oro de un pais\n";
+    std::cout << "3. Atleta con mas medallas\n";
+    std::cout << "4. Salir\n";
+    int option;
+    std::cout << "Seleccione una opcion: ";
+    std::cin >> option;
+    std::cin.ignore(); // Limpiar el buffer de entrada
+    switch (option) {
+        case 1:
+            std::cout << "Buscar atleta seleccionado.\n";
+            // Lógica para buscar atleta
+            break;
+        case 2:
+            std::cout << "Buscar medallas de oro de un pais seleccionado.\n";
+            // Lógica para buscar medallas de oro
+            break;
+        case 3:
+            std::cout << "Atleta con mas medallas seleccionado.\n";
+            // Lógica para encontrar atleta con más medallas
+            break;
+        case 4:
+            std::cout << "Saliendo del programa.\n";
+            break;
+        default:
+            std::cout << "Opcion no valida. Intente de nuevo.\n";
+            break;
+    }
     return 0;
 }
