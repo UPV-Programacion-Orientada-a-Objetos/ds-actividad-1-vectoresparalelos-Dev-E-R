@@ -1,14 +1,23 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <sstream> // Necesario para parsear las líneas del CSV
+#include <sstream>
+#include <vector> // Necesario para usar vectores
 
 using namespace std;
-// Prototipos de las funciones que ahora reciben el archivo
-void searchAthlete(ifstream& archive);
-void searchCountryGoldMedals(ifstream& archive);
-void showGoldMedalsAthlete(ifstream& archive);
+
+vector<string> g_nombres;
+vector<string> g_paises;
+vector<string> g_disciplinas;
+vector<string> g_generos;
+vector<int> g_medallas; 
+
+void cargarDatos(ifstream& archive); 
+void searchAthlete();
+void searchCountryGoldMedals();
+void showGoldMedalsAthlete();
 void registerAthlete(const string& filename); 
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Uso: ./programa <nombre_archivo_sin_extension>" << std::endl;
@@ -22,31 +31,32 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: No se pudo abrir el archivo: " << nameArchive << std::endl;
         return 1;
     }
+    
+    cargarDatos(archive);
+    archive.close(); // Cerramos el archivo, ya no lo necesitamos para leer.
 
-    std::cout << "Archivo abierto con exito: " << nameArchive << std::endl;
-
-    // --- MENÚ PRINCIPAL ---
+    // Menu Princupal 
     int option;
     do {
         std::cout << "\n--- Menu de opciones ---\n"
                   << "1. Buscar atleta\n"
                   << "2. Buscar medallas de un pais\n"
                   << "3. Atleta con mas medallas\n"
-                  << "4. Registrar atleta \n"
+                  << "4. Registrar atleta\n"
                   << "5. Salir\n"
-                  << "Seleccione una opcion (1-4): ";
+                  << "Seleccione una opcion (1-5): ";
         std::cin >> option;
         std::cin.ignore(); // Limpiar el buffer de entrada
 
         switch (option) {
             case 1:
-                searchAthlete(archive);
+                searchAthlete();
                 break;
             case 2:
-                searchCountryGoldMedals(archive);
+                searchCountryGoldMedals();
                 break;
             case 3:
-                showGoldMedalsAthlete(archive);
+                showGoldMedalsAthlete(); 
                 break;
             case 4:
                 registerAthlete(nameArchive);
@@ -60,41 +70,53 @@ int main(int argc, char* argv[]) {
         }
     } while (option != 5);
     
-    archive.close(); // Cerramos el archivo al final
     return 0;
 }
 
-void searchAthlete(ifstream& archive) {
-    archive.clear();
-    archive.seekg(0, std::ios::beg);
+void cargarDatos(ifstream& archive) {
+    string line;
+    getline(archive, line); // Saltar la línea del encabezado
 
+    while (getline(archive, line)) {
+        stringstream ss(line);
+        string nombre, pais, disciplina, genero, medallaStr;
+
+        // Parsear la línea del CSV
+        getline(ss, nombre, ',');
+        getline(ss, pais, ',');
+        getline(ss, disciplina, ',');
+        getline(ss, genero, ',');
+        getline(ss, medallaStr, ',');
+
+        // agrega los datos a los vectores globales
+        g_nombres.push_back(nombre);
+        g_paises.push_back(pais);
+        g_disciplinas.push_back(disciplina);
+        g_generos.push_back(genero);
+        try {
+            g_medallas.push_back(stoi(medallaStr));
+        } catch (const exception&) {
+            g_medallas.push_back(0); // Si la medalla no es un número, se guarda 0
+        }
+    }
+    std::cout << "Se cargaron " << g_nombres.size() << " registros de atletas en memoria." << std::endl;
+}
+
+void searchAthlete() {
     string athleteName;
     std::cout << "Ingrese el nombre del atleta a buscar: ";
     std::getline(std::cin, athleteName);
 
-    string line;
-    std::getline(archive, line); // Saltar la línea del encabezado
-
     bool found = false;
-    while (std::getline(archive, line)) {
-        stringstream ss(line);
-        string nombre, pais, disciplina, genero, medallaStr;
-        
-        std::getline(ss, nombre, ',');
-        
-        // Si el nombre del atleta en la línea actual contiene el texto buscado
-        if (nombre.find(athleteName) != std::string::npos) {
-            std::getline(ss, pais, ',');
-            std::getline(ss, disciplina, ',');
-            std::getline(ss, genero, ',');
-            std::getline(ss, medallaStr, ',');
-            
+    // Iteramos sobre el vector de nombres
+    for (size_t i = 0; i < g_nombres.size(); ++i) {
+        if (g_nombres[i].find(athleteName) != std::string::npos) {
             std::cout << "\n--- Atleta Encontrado ---\n"
-                      << "Nombre: " << nombre << "\n"
-                      << "Pais: " << pais << "\n"
-                      << "Disciplina: " << disciplina << "\n"
-                      << "Genero: " << genero << "\n"
-                      << "Medallas: " << medallaStr << std::endl;
+                      << "Nombre: " << g_nombres[i] << "\n"
+                      << "Pais: " << g_paises[i] << "\n"
+                      << "Disciplina: " << g_disciplinas[i] << "\n"
+                      << "Genero: " << g_generos[i] << "\n"
+                      << "Medallas: " << g_medallas[i] << std::endl;
             found = true;
         }
     }
@@ -104,84 +126,51 @@ void searchAthlete(ifstream& archive) {
     }
 }
 
-void searchCountryGoldMedals(ifstream& archive) {
-    archive.clear();
-    archive.seekg(0, std::ios::beg);
-
+void searchCountryGoldMedals() {
     string countryName;
     std::cout << "Ingrese el nombre del pais a buscar: ";
     std::getline(std::cin, countryName);
 
-    string line;
-    std::getline(archive, line); // Saltar encabezado
-
     int totalMedals = 0;
-    while (std::getline(archive, line)) {
-        stringstream ss(line);
-        string nombre, pais, disciplina, genero, medallaStr;
-
-        std::getline(ss, nombre, ',');
-        std::getline(ss, pais, ',');
-        
-        if (pais == countryName) {
-            std::getline(ss, disciplina, ',');
-            std::getline(ss, genero, ',');
-            std::getline(ss, medallaStr, ',');
-            try {
-                totalMedals += std::stoi(medallaStr);
-            } catch (const exception&) {  }
+    // Iteramos sobre el vector de países
+    for (size_t i = 0; i < g_paises.size(); ++i) {
+        if (g_paises[i] == countryName) {
+            totalMedals += g_medallas[i];
         }
     }
     
     std::cout << "El pais " << countryName << " tiene un total de " << totalMedals << " medallas." << std::endl;
 }
 
-void showGoldMedalsAthlete(ifstream& archive) {
-    archive.clear();
-    archive.seekg(0, std::ios::beg);
+void showGoldMedalsAthlete() {
+    if (g_nombres.empty()) {
+        std::cout << "No hay datos de atletas cargados." << std::endl;
+        return;
+    }
 
-    string line;
-    std::getline(archive, line); // Saltar la línea del encabezado
-
-    string topAthletes; // Un string para guardar todos los nombres
+    string topAthletes;
     int maxMedals = -1;
 
-    while (std::getline(archive, line)) {
-        stringstream ss(line);
-        string nombre, pais, disciplina, genero, medallaStr;
-
-        // Extraemos los datos de la línea
-        std::getline(ss, nombre, ',');
-        std::getline(ss, pais, ',');
-        std::getline(ss, disciplina, ',');
-        std::getline(ss, genero, ',');
-        std::getline(ss, medallaStr, ',');
-        
-        try {
-            int currentMedals = std::stoi(medallaStr);
-            
-            // Si encontramos un nuevo máximo
-            if (currentMedals > maxMedals) {
-                maxMedals = currentMedals;
-                topAthletes = nombre; // Se convierte en el único de la lista
-            } 
-            // Si encontramos un empate con el máximo actual
-            else if (currentMedals == maxMedals) {
-                topAthletes += ", " + nombre; // Lo añadimos a la lista
-            }
-        } catch (const exception&) {
-            // Ignora líneas donde la medalla no sea un número válido
+    // Iteramos sobre el vector de medallas
+    for (size_t i = 0; i < g_medallas.size(); ++i) {
+        if (g_medallas[i] > maxMedals) {
+            maxMedals = g_medallas[i];
+            topAthletes = g_nombres[i];
+        } 
+        else if (g_medallas[i] == maxMedals) {
+            topAthletes += ", " + g_nombres[i];
         }
     }
     
     if (maxMedals == -1) {
-        std::cout << "No se encontraron datos de medallas en el archivo." << std::endl;
+        std::cout << "No se encontraron datos de medallas." << std::endl;
     } else {
         std::cout << "Atleta(s) con mas medallas (" << maxMedals << " medallas): " << topAthletes << std::endl;
     }
 }
+
 void registerAthlete(const string& filename) {
-    string nombre, pais, disciplina, genero, medallas;
+    string nombre, pais, disciplina, genero, medallasStr;
 
     std::cout << "\n--- Registrar Nuevo Atleta ---\n";
     std::cout << "Ingrese el nombre: ";
@@ -197,14 +186,26 @@ void registerAthlete(const string& filename) {
     std::getline(std::cin, genero);
     
     std::cout << "Ingrese el numero de medallas: ";
-    std::getline(std::cin, medallas);
+    std::getline(std::cin, medallasStr);
 
     ofstream archive(filename, ios::app);
+    if (archive.is_open()) {
+        archive << endl << nombre << "," << pais << "," << disciplina << "," << genero << "," << medallasStr;
+        archive.close();
+    } else {
+        std::cerr << "Error: No se pudo abrir el archivo para registrar." << std::endl;
+        return;
+    }
 
-    archive << endl << nombre << "," << pais << "," << disciplina << "," << genero << "," << medallas;
-
-    archive.close();
+    g_nombres.push_back(nombre);
+    g_paises.push_back(pais);
+    g_disciplinas.push_back(disciplina);
+    g_generos.push_back(genero);
+    try {
+        g_medallas.push_back(stoi(medallasStr));
+    } catch (const exception&) {
+        g_medallas.push_back(0);
+    }
 
     std::cout << "Atleta registrado con exito." << std::endl;
 }
-
